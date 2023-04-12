@@ -32,6 +32,43 @@ unsigned long lastTimeBotRan;
 const int ledPin = 32;
 bool ledState = LOW;
 
+void setup() {
+  Serial.begin(115200);
+
+  pinMode(ledPin, OUTPUT);
+  digitalWrite(ledPin, ledState);
+  
+  // Connect to Wi-Fi
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+  client.setCACert(TELEGRAM_CERTIFICATE_ROOT); // Add root certificate for api.telegram.org
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.println("Connecting to WiFi..");
+  }
+  // Print ESP32 Local IP Address
+  Serial.println(WiFi.localIP());
+
+  Serial.print("Retrieving time: ");
+  configTime(0, 0, "pool.ntp.org"); // get UTC time via NTP
+  time_t now = time(nullptr);
+  while (now < 24 * 3600)
+  {
+    Serial.print(".");
+    delay(100);
+    now = time(nullptr);
+  }
+  Serial.println("\n");
+  Serial.println(now);
+
+  bot.sendMessage(CHAT_ID, "Welcome! type /start to start", "");
+}
+
+void loop() {
+  handleTelegramBot();
+}
+
 // Handle Telegram bot logic
 void handleTelegramBot() {
   if (millis() > lastTimeBotRan + botRequestDelay)  {
@@ -96,42 +133,5 @@ void handleNewMessages(int numNewMessages) {
       }
     }
   }
-}
-
-void setup() {
-  Serial.begin(115200);
-
-  pinMode(ledPin, OUTPUT);
-  digitalWrite(ledPin, ledState);
-  
-  // Connect to Wi-Fi
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
-  client.setCACert(TELEGRAM_CERTIFICATE_ROOT); // Add root certificate for api.telegram.org
-
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(1000);
-    Serial.println("Connecting to WiFi..");
-  }
-  // Print ESP32 Local IP Address
-  Serial.println(WiFi.localIP());
-
-  Serial.print("Retrieving time: ");
-  configTime(0, 0, "pool.ntp.org"); // get UTC time via NTP
-  time_t now = time(nullptr);
-  while (now < 24 * 3600)
-  {
-    Serial.print(".");
-    delay(100);
-    now = time(nullptr);
-  }
-  Serial.println("\n");
-  Serial.println(now);
-
-  bot.sendMessage(CHAT_ID, "Welcome! type /start to start", "");
-}
-
-void loop() {
-  handleTelegramBot();
 }
 
